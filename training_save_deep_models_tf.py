@@ -29,7 +29,7 @@ def main():
 
     # Instantiating NN
     net = AFNet()
-    net = EFFNet()
+    # net = EFFNet()
     optimizer = optimizers.Adam(learning_rate=LR)
     loss_object = losses.SparseCategoricalCrossentropy(from_logits=True)
 
