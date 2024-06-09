@@ -5,7 +5,7 @@ from tensorflow.keras import models, layers, optimizers, losses
 import argparse
 from help_code_demo_tf import ECG_DataSET, ToTensor, create_dataset  # 您可能需要调整这部分，以确保数据加载和转换与 TensorFlow 兼容
 from models.model_tf import AFNet
-from models.effi import EFFNet
+# from models.effi import EFFNet
 
 
 def main():
