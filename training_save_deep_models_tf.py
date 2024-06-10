@@ -3,10 +3,10 @@ os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 import tensorflow as tf
 from tensorflow.keras import models, layers, optimizers, losses
 import argparse
-from help_code_demo_tf import ECG_DataSET, ToTensor, create_dataset  # 您可能需要调整这部分，以确保数据加载和转换与 TensorFlow 兼容
+from help_code_demo_tf import ECG_DataSET, ToTensor, create_dataset  # Adjust as necessary for compatibility with TensorFlow
 from models.model_tf import AFNet
+from models.model_tf import AFNet_Com
 # from models.effi import EFFNet
-
 
 def main():
     # Hyperparameters
@@ -20,30 +20,25 @@ def main():
     Train_acc = []
     Test_loss = []
     Test_acc = []
-
-    # tf.config.experimental.set_visible_devices([], 'GPU')
-    # print(tf.config.list_physical_devices('GPU'))
+    best_acc = 0.0  # Initialize best accuracy
 
     physical_devices = tf.config.list_physical_devices('GPU')
     tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
     # Instantiating NN
-    net = AFNet()
-    # net = EFFNet()
+    # net = AFNet()
+    net = AFNet_Com()
     optimizer = optimizers.Adam(learning_rate=LR)
     loss_object = losses.SparseCategoricalCrossentropy(from_logits=True)
 
     # Start dataset loading
     trainset = ECG_DataSET(root_dir=path_data, indice_dir=path_indices, mode='train', size=SIZE, transform=ToTensor())
     trainloader = create_dataset(trainset, BATCH_SIZE)
-    # trainloader = trainloader.shuffle(buffer_size=1000).batch(BATCH_SIZE).prefetch(tf.data.experimental.AUTOTUNE)
 
     testset = ECG_DataSET(root_dir=path_data, indice_dir=path_indices, mode='test', size=SIZE, transform=ToTensor())
     testloader = create_dataset(testset, BATCH_SIZE)
-    # testloader = testloader.batch(BATCH_SIZE).prefetch(tf.data.experimental.AUTOTUNE)
 
     print("Start training")
-    # history = net.fit(trainloader, epochs=EPOCH, validation_data=testloader, verbose=1)
     for epoch in range(EPOCH):
         running_loss = 0.0
         correct = 0.0
@@ -70,7 +65,6 @@ def main():
 
         running_loss = 0.0
         accuracy = 0.0
-
         correct = 0.0
         total = 0.0
         i = 0.0
@@ -84,33 +78,45 @@ def main():
             running_loss_test += test_loss
             i += x.shape[0]
 
-        print('Test Acc: %.5f Test Loss: %.5f' % (correct / total, running_loss_test / i))
+        test_accuracy = correct / total
+        test_loss_avg = running_loss_test / i
 
-        Test_loss.append(running_loss_test / i)
-        Test_acc.append((correct / total))
-    # Save model
+        print('Test Acc: %.5f Test Loss: %.5f' % (test_accuracy, test_loss_avg))
+
+        Test_loss.append(test_loss_avg)
+        Test_acc.append(test_accuracy)
+
+        # Save the model for each epoch
+        net.save(f'./saved_models/{epoch+1}_ECG_net_tf.h5')
+
+        # Save the model if the test accuracy is the best we've seen so far
+        if test_accuracy > best_acc:
+            best_acc = test_accuracy
+            net.save('./saved_models/best_ECG_net_tf.h5')
+
+    # Save final model and results
     net.save('./saved_models/ECG_net_tf.h5')
 
     # Write results to file
-    file = open('./saved_models/loss_acc.txt', 'w')
-    file.write("Train_loss\n")
-    file.write(str(Train_loss))
-    file.write('\n\n')
-    file.write("Train_acc\n")
-    file.write(str(Train_acc))
-    file.write('\n\n')
-    file.write("Test_loss\n")
-    file.write(str(Test_loss))
-    file.write('\n\n')
-    file.write("Test_acc\n")
-    file.write(str(Test_acc))
-    file.write('\n\n')
+    with open('./saved_models/loss_acc.txt', 'w') as file:
+        file.write("Train_loss\n")
+        file.write(str(Train_loss))
+        file.write('\n\n')
+        file.write("Train_acc\n")
+        file.write(str(Train_acc))
+        file.write('\n\n')
+        file.write("Test_loss\n")
+        file.write(str(Test_loss))
+        file.write('\n\n')
+        file.write("Test_acc\n")
+        file.write(str(Test_acc))
+        file.write('\n\n')
 
     print('Finish training')
 
 if __name__ == '__main__':
     argparser = argparse.ArgumentParser()
-    argparser.add_argument('--epoch', type=int, help='epoch number', default=1)
+    argparser.add_argument('--epoch', type=int, help='epoch number', default=5)
     argparser.add_argument('--lr', type=float, help='learning rate', default=0.001)
     argparser.add_argument('--batchsz', type=int, help='total batchsz for traindb', default=32)
     argparser.add_argument('--size', type=int, default=1250)
