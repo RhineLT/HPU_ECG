@@ -7,6 +7,7 @@ from sklearn.metrics import precision_score, recall_score, f1_score, fbeta_score
 from help_code_demo_tf import ECG_DataSET, ToTensor, create_dataset # Adjust as necessary for compatibility with TensorFlow
 from models.model_tf import AFNet
 from models.model_tf import AFNet_Com
+from models.model_tf import AFNet_light
 # from models.effi import EFFNet
 
 def main():
@@ -32,7 +33,8 @@ def main():
     # Instantiating NN
     # net = AFNet()
 
-    net = AFNet_Com()
+    # net = AFNet_Com()
+    net = AFNet_light()
     net.build((1,1250,1,1))
     print(net.summary())
     optimizer = optimizers.Adam(learning_rate=LR)
