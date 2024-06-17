@@ -3,7 +3,8 @@ os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 import tensorflow as tf
 from tensorflow.keras import models, layers, optimizers, losses
 import argparse
-from help_code_demo_tf import ECG_DataSET, ToTensor, create_dataset  # Adjust as necessary for compatibility with TensorFlow
+from sklearn.metrics import precision_score, recall_score, f1_score, fbeta_score
+from help_code_demo_tf import ECG_DataSET, ToTensor, create_dataset # Adjust as necessary for compatibility with TensorFlow
 from models.model_tf import AFNet
 from models.model_tf import AFNet_Com
 # from models.effi import EFFNet
@@ -20,14 +21,20 @@ def main():
     Train_acc = []
     Test_loss = []
     Test_acc = []
+    Test_fb = []
+    best_fb = 0.0  # Initialize best F-beta score
     best_acc = 0.0  # Initialize best accuracy
+    
 
     physical_devices = tf.config.list_physical_devices('GPU')
     tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
     # Instantiating NN
     # net = AFNet()
+
     net = AFNet_Com()
+    net.build((1,1250,1,1))
+    print(net.summary())
     optimizer = optimizers.Adam(learning_rate=LR)
     loss_object = losses.SparseCategoricalCrossentropy(from_logits=True)
 
@@ -63,6 +70,8 @@ def main():
         Train_loss.append(running_loss / i)
         Train_acc.append(accuracy / i)
 
+        y_true = []
+        y_pred = []
         running_loss = 0.0
         accuracy = 0.0
         correct = 0.0
@@ -77,15 +86,17 @@ def main():
             correct += tf.reduce_sum(tf.cast(tf.equal(pred, y), tf.float32))
             running_loss_test += test_loss
             i += x.shape[0]
+            y_true.extend(y.numpy())
+            y_pred.extend(pred.numpy())
 
         test_accuracy = correct / total
         test_loss_avg = running_loss_test / i
-
         print('Test Acc: %.5f Test Loss: %.5f' % (test_accuracy, test_loss_avg))
-
         Test_loss.append(test_loss_avg)
         Test_acc.append(test_accuracy)
-
+        fb = fbeta_score(y_true, y_pred, average='weighted', beta=2)
+        Test_fb.append(fb)
+        print('F-beta score: %.5f' % fb)
         # Save the model for each epoch
         net.save(f'./saved_models/{epoch+1}_ECG_net_tf.h5')
 
@@ -93,7 +104,9 @@ def main():
         if test_accuracy > best_acc:
             best_acc = test_accuracy
             net.save('./saved_models/best_ECG_net_tf.h5')
-
+        if fb>best_fb:
+            best_fb = fb
+            net.save('./saved_models/fb_ECG_net_tf.h5')
     # Save final model and results
     net.save('./saved_models/ECG_net_tf.h5')
 
