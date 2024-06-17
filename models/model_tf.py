@@ -1,5 +1,7 @@
 import tensorflow as tf
 from tensorflow.keras import layers, models
+from tensorflow.keras.losses import CategoricalCrossentropy
+from tensorflow.keras.optimizers import Adam
 
 
 def AFNet():
@@ -43,19 +45,17 @@ def MobileNetModel():
 def AFNet_Com():
     model = models.Sequential([
         layers.Conv2D(filters=8, kernel_size=(6, 1), strides=(2, 1), padding='valid', activation='relu'),
-#         layers.BatchNormalization(epsilon=1e-5, momentum=0.1),
 
         layers.Conv2D(filters=16, kernel_size=(5, 1), strides=(2, 1), padding='valid', activation='relu'),
-#         layers.BatchNormalization(epsilon=1e-5, momentum=0.1),
 
         layers.Conv2D(filters=32, kernel_size=(4, 1), strides=(2, 1), padding='valid', activation='relu'),
-#         layers.BatchNormalization(epsilon=1e-5, momentum=0.1),
+
 
         layers.Conv2D(filters=32, kernel_size=(4, 1), strides=(2, 1), padding='valid', activation='relu'),
-#         layers.BatchNormalization(epsilon=1e-5, momentum=0.1),
+
 
         layers.Conv2D(filters=32, kernel_size=(4, 1), strides=(2, 1), padding='valid', activation='relu'),
-#         layers.BatchNormalization(epsilon=1e-5, momentum=0.1),
+
 
         layers.Flatten(),
         layers.Dropout(0.5),
@@ -81,3 +81,33 @@ def AFNet_light():
     ])
     return model
 
+
+def TeacherNet():
+    model = models.Sequential([
+        layers.Conv2D(filters=8, kernel_size=(6, 1), strides=(2, 1), padding='valid', activation='relu'),
+        layers.Conv2D(filters=16, kernel_size=(5, 1), strides=(2, 1), padding='valid', activation='relu'),
+        layers.Conv2D(filters=32, kernel_size=(4, 1), strides=(2, 1), padding='valid', activation='relu'),
+        layers.Conv2D(filters=32, kernel_size=(4, 1), strides=(2, 1), padding='valid', activation='relu'),
+        layers.Conv2D(filters=32, kernel_size=(4, 1), strides=(2, 1), padding='valid', activation='relu'),
+        layers.Flatten(),
+        layers.Dropout(0.5),
+        layers.Dense(128, activation='relu'),
+        layers.Dropout(0.5),
+        layers.Dense(20, activation='relu'),
+        layers.Dense(2)
+    ])
+    return model
+
+def StudentNet():
+    model = models.Sequential([
+        layers.Conv2D(filters=2, kernel_size=(3, 1), strides=(2, 1), padding='valid', activation='relu'),
+        layers.Conv2D(filters=4, kernel_size=(4, 1), strides=(2, 1), padding='valid', activation='relu'),
+        layers.Conv2D(filters=8, kernel_size=(5, 1), strides=(2, 1), padding='valid', activation='relu'),
+        layers.Conv2D(filters=16, kernel_size=(4, 1), strides=(2, 1), padding='valid', activation='relu'),
+        layers.Conv2D(filters=16, kernel_size=(3, 1), strides=(2, 1), padding='valid', activation='relu'),
+        layers.Flatten(),  
+        layers.Dropout(0.5),
+        layers.Dense(10, activation='relu'),
+        layers.Dense(2)
+    ])
+    return model
