@@ -67,3 +67,17 @@ def AFNet_Com():
 
     return model
 
+def AFNet_light():
+    model = models.Sequential([
+        layers.Conv2D(filters=2, kernel_size=(3, 1), strides=(2, 1), padding='valid', activation='relu'),
+        layers.Conv2D(filters=4, kernel_size=(4, 1), strides=(2, 1), padding='valid', activation='relu'),
+        layers.Conv2D(filters=8, kernel_size=(5, 1), strides=(2, 1), padding='valid', activation='relu'),
+        layers.Conv2D(filters=16, kernel_size=(4, 1), strides=(2, 1), padding='valid', activation='relu'),
+        layers.Conv2D(filters=16, kernel_size=(3, 1), strides=(2, 1), padding='valid', activation='relu'),
+        layers.Flatten(),  
+        layers.Dropout(0.5),
+        layers.Dense(10, activation='relu'),
+        layers.Dense(2)
+    ])
+    return model
+
